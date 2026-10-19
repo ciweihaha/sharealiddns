@@ -217,7 +217,7 @@ aliddns_AccessKeyId=""
 aliddns_AccessKeySecret=""
 aliddns_lan_mac=""
 aliddns_url_ok=""
-aliddns_url="http://alidns.aliyuncs.com"
+aliddns_url="https://alidns.aliyuncs.com"
 #======================================================================================
 dhcp6cPID=0
 wanstartPID=0
@@ -949,12 +949,8 @@ get_Record(){
 		if isNotEmpty "$aliddns_url_ok";then
 		    aliddns_url="$aliddns_url_ok"
 		else
-		    n=$(($num_getRecord % 2))
-			if iseq "$n" 1;then 
-                aliddns_url="http://alidns.aliyuncs.com"
-            else
-                aliddns_url="https://alidns.aliyuncs.com"
-            fi
+		    # 固定使用 https：AliDNS API 全程加密，重试不再回退到 http（防签名被中间人截获/重放）
+		    aliddns_url="https://alidns.aliyuncs.com"
 		fi
 		logs "$num_getRecord/$jk:Select this address[$aliddns_url] to link aliyun and Geting domain name Record, please wait..." "" "y" 
 	    q=$(aliddns_subdomain_Records "$aliddns_name" "$aliddns_domain" "$Type") 
