@@ -77,12 +77,12 @@ do_install(){
 	
 	trap "rm -rf $TMP_PATH;rm -f $TAR_GZ;echo '';logs 'Exit installation.';logs '<<========';exit 0" HUP INT QUIT PIPE ALRM TERM 
 	
-	chmod -R 777 .
+	chmod -R 755 .
 	if [ "$OS_TYPE" == "merlin" ];then
 	    nvram set jffs2_enable=1
 	    nvram set jffs2_scripts=1
 	    nvram commit
-        [ -d "/jffs/scripts" ] && chmod -R 777 /jffs/scripts
+        [ -d "/jffs/scripts" ] && chmod -R 755 /jffs/scripts
 	fi
 		
 	#check INSTALL_PATH vlue
@@ -271,6 +271,8 @@ do_install(){
 	if [ -f "$SCRIPTS_PATH/lib/share.lib" -a -f "$SCRIPTS_PATH/sharealiddns/etc/init.d/sharealiddns.sh" -a -f "$SCRIPTS_PATH/sharealiddns/conf/aliddns.conf" ];then
 		chmod +x "$SCRIPTS_PATH/lib/share.lib"
 		chmod +x "$SCRIPTS_PATH/sharealiddns/etc/init.d/sharealiddns.sh"
+		# aliddns.conf 存放 AccessKeyId/AccessKeySecret 明文，仅属主可读写
+		chmod 600 "$SCRIPTS_PATH/sharealiddns/conf/aliddns.conf"
 		logs "Successfully install to $SCRIPTS_PATH[成功安装到${SCRIPTS_PATH}]"
 		logs "<<========"
 		if [ -x "$SCRIPTS_PATH/sharealiddns/etc/init.d/sharealiddns.sh" ];then
