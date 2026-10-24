@@ -240,15 +240,15 @@ get_url_cmd(){
 	if [ -z "$g" ];then
 	    if [ -n "$u" ];then
 	        if [ -n "$WGET" ];then
-	            p=$($WGET $m --no-check-certificate -q -T $t -O- $u) 2>/dev/null
+	            p=$($WGET $m -q -T $t -O- $u) 2>/dev/null
             elif [ -n "$CURL" ];then
-	            p=$($CURL $m -k -s --connect-timeout $t $u) 2>/dev/null
+	            p=$($CURL $m -s --connect-timeout $t $u) 2>/dev/null
             fi
 	    fi
 	elif [ "$g" == "wget" ];then
-	    p=$($WGET $m --no-check-certificate -T $t -O- $u) 2>/dev/null
+	    p=$($WGET $m -T $t -O- $u) 2>/dev/null
 	elif [ "$g" == "curl" ];then
-	    p=$($CURL $m -k --connect-timeout $t $u) 2>/dev/null
+	    p=$($CURL $m --connect-timeout $t $u) 2>/dev/null
 	fi
 	echo "$p"
 }
@@ -257,7 +257,7 @@ get_ip_wget(){
 	local u="$1";local t="$2";local m="$3";local wp=""
 	isEmpty "$t" && t=30
 	if [ -n "$WGET" -a -n "$u" ];then
-	    p=$($WGET --no-check-certificate -q -T $t -O- $u) 2>/dev/null
+	    p=$($WGET -q -T $t -O- $u) 2>/dev/null
 		if iseq $? 0;then
 			if iseq "$m" "ipv4";then
 				public_ipv4_check "$p" && wp="$p" 
@@ -275,7 +275,7 @@ get_ip_curl(){
 	local u="$1";local t="$2";local m="$3";local wp=""
 	isEmpty "$t" && t=30
 	if [ -n "$CURL" -a -n "$u" ];then
-	    p=$($CURL -k -s --connect-timeout $t $u) 2>/dev/null
+	    p=$($CURL -s --connect-timeout $t $u) 2>/dev/null
 		if iseq $? 0;then
 			if iseq "$m" "ipv4";then
 				public_ipv4_check "$p" && wp="$p" 
@@ -290,14 +290,14 @@ get_ip_curl(){
 }
 #======================================================================================
 isgetexternalIPV46(){
-    local m="$1";local r="";local u4="http://ipv4.ident.me";local u6="http://ipv6.ident.me"
+    local m="$1";local r="";local u4="https://ipv4.ident.me";local u6="https://ipv6.ident.me"
 	local f4="/tmp/isgetexternalIPV4.success";local f6="/tmp/isgetexternalIPV6.success"
     if iseq "$m" "ipv4";then
         if [ -f "$f4" ];then
             r=$(cat "$f4" | grep -w 'success' | RMSTRING 'success=')
 			return "$r"
 		else 
-		    r=$($WGET --no-check-certificate -T 15 -O- $u4) 2>/dev/null
+		    r=$($WGET -T 15 -O- $u4) 2>/dev/null
             if isNotEmpty "$r" ;then
 	            echo "success=0" > "$f4"
                 return 0
@@ -311,7 +311,7 @@ isgetexternalIPV46(){
 		    r=$(cat "$f6" | grep -w 'success' | RMSTRING 'success=')
 			return "$r"
 		else
-		    r=$($WGET --no-check-certificate -T 15 -O- $u6) 2>/dev/null
+		    r=$($WGET -T 15 -O- $u6) 2>/dev/null
             if isNotEmpty "$r" ;then
 	            echo "success=0" > "$f6"
                 return 0
