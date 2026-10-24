@@ -67,8 +67,10 @@ do_check(){
 
 do_install(){
     local INSTALL_PATH="$1";local SH="$2"
-	local DOWN_URL="https://codeload.github.com/zwmscorm/sharealiddns/tar.gz/master"
-	local TMP_PATH="/tmp/sharealiddns-master"
+	local DOWN_COMMIT="fe40cd2d022247cece1bf37230fa0eda6c4d25f6"
+	local DOWN_URL="https://codeload.github.com/zwmscorm/sharealiddns/tar.gz/$DOWN_COMMIT"
+	local DOWN_SHA256="6924f95766537e0f59bd63fe6df2a4d578f146c009ce683b3350c5ec3ebcf319"
+	local TMP_PATH="/tmp/sharealiddns-$DOWN_COMMIT"
 	local TAR_GZ="$TMP_PATH.tar.gz"
 	local SCRIPTS_PATH=""
 	local i=1;local m="";local s="";local l="";local n=0;local p4="";local p6="";local isWGETV4=1;local isCURLV4=1;local isWGETV6=1;local isCURLV6=1
@@ -77,12 +79,16 @@ do_install(){
 	
 	trap "rm -rf $TMP_PATH;rm -f $TAR_GZ;echo '';logs 'Exit installation.';logs '<<========';exit 0" HUP INT QUIT PIPE ALRM TERM 
 	
-	chmod -R 755 .
+	# No recursive chmod of the current directory or of /jffs/scripts:
+	# only the hook files managed by this software need the executable bit.
+	# [不对当前目录或/jffs/scripts做递归改权限, 仅处理本软件管理的钩子文件]
 	if [ "$OS_TYPE" == "merlin" ];then
 	    nvram set jffs2_enable=1
 	    nvram set jffs2_scripts=1
 	    nvram commit
-        [ -d "/jffs/scripts" ] && chmod -R 755 /jffs/scripts
+	    for hf in "/jffs/scripts/wan-start" "/jffs/scripts/ddns-start" "/jffs/scripts/post-mount";do
+		    [ -f "$hf" ] && chmod 755 "$hf"
+	    done
 	fi
 		
 	#check INSTALL_PATH vlue
@@ -187,23 +193,23 @@ do_install(){
    
 	for u in $u4;do
 	    logs "Firmware compatibility is being check wget ipv4...[正在检测固件$WGET ipv4兼容性...]-[$u]"
-	    [  -n "$($WGET -4 -q --no-check-certificate -T 5 -t 3 -O- $u)" ] && isWGETV4=0 && break   
+	    [  -n "$($WGET -4 -q -T 5 -t 3 -O- $u)" ] && isWGETV4=0 && break   
 	done
 	if [ "$isIPV6" -eq 0 ] && [ "$isWGETV4" -eq 0 ];then
 	    for u in $u6;do
 		    logs "Firmware compatibility is being check wget ipv6...[正在检测固件$WGET ipv6兼容性...]-[$u]"
-	        [ -n "$($WGET -6 -q --no-check-certificate -T 5 -t 3 -O- $u)" ] && isWGETV6=0 && break 		
+	        [ -n "$($WGET -6 -q -T 5 -t 3 -O- $u)" ] && isWGETV6=0 && break 		
 	    done
 	fi
 	
 	for u in $u4;do
 	    logs "Firmware compatibility is being check curl ipv4...[正在检测固件$CURL ipv4兼容性...]-[$u]"
-	    [ -n "$($CURL -4 -k -f -s --connect-timeout 5 --retry 3 $u)" ] && isCURLV4=0 && break    
+	    [ -n "$($CURL -4 -f -s --connect-timeout 5 --retry 3 $u)" ] && isCURLV4=0 && break    
 	done
 	if [ "$isIPV6" -eq 0 ] && [ "$isCURLV4" -eq 0 ];then
 	    for u in $u6;do
 		    logs "Firmware compatibility is being check curl ipv6...[正在检测固件$CURL ipv6兼容性...]-[$u]"
-	        [ -n "$($CURL -6 -k -f -s --connect-timeout 5 --retry 3 $u)" ] && isCURLV6=0 && break    
+	        [ -n "$($CURL -6 -f -s --connect-timeout 5 --retry 3 $u)" ] && isCURLV6=0 && break    
 	    done	
 	fi
 		
@@ -227,18 +233,32 @@ do_install(){
 	i=1;r="1"
 	while [ $i -le 10 ];do
 	    if [ "$r" == "1" -a -n "$WGET" ];then
-	        "$WGET" --no-check-certificate -c -q -O "$TAR_GZ" "$DOWN_URL"
+	        "$WGET" -q -O "$TAR_GZ" "$DOWN_URL"
 		    [ $? -eq 0 -a -f "$TAR_GZ" ] && r="0"
 	    fi
 	    if [ "$r" == "1" -a -n "$CURL" ];then	
-	        "$CURL" -k "$DOWN_URL" -o "$TAR_GZ"
+	        "$CURL" -f "$DOWN_URL" -o "$TAR_GZ"
 		    [ $? -eq 0 -a -f "$TAR_GZ" ] && r="0"
         fi	 
 	    [ "$r" == "0" ] && break
 	    i=$((i+1))
 	done
 	if [ "$r" == "0" ];then
-	    logs "Download successful[下载成功]" 
+	    logs "Download successful[下载成功]"
+		# Verify the pinned tarball against its recorded SHA-256 before extracting
+		local ACTUAL_SHA256=""
+		if [ -n "$(which sha256sum)" ];then
+		    ACTUAL_SHA256=$(sha256sum "$TAR_GZ" | awk '{print $1}')
+		elif [ -n "$OPENSSL" ];then
+		    ACTUAL_SHA256=$($OPENSSL dgst -sha256 "$TAR_GZ" | awk '{print $NF}')
+		fi
+		if [ -z "$ACTUAL_SHA256" -o "$ACTUAL_SHA256" != "$DOWN_SHA256" ];then
+		    logs "SHA-256 verification failed, installation aborted[SHA-256校验失败, 安装中止]"
+		    rm -f "$TAR_GZ"
+		    rm -rf "$TMP_PATH"
+		    exit 0
+		fi
+		logs "SHA-256 verified[SHA-256校验通过]"
 		"$TAR" -xzf "$TAR_GZ" -C "/tmp/"
 	    if [ $? -ne 0 -o ! -d "$TMP_PATH/myscripts/lib" -o ! -d "$TMP_PATH/myscripts/sharealiddns" ];then
 		    logs "Tar failed, Please reinstall[tar解压失败, 请重新安装]" 
