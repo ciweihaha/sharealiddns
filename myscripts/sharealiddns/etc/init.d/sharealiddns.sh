@@ -79,7 +79,6 @@ aliddns_conf="$aliddns_root/conf/aliddns.conf"
 aliddns_log="$aliddns_root/log/log.txt"
 aliddns_msg="/tmp/aliddns_msg.txt"
 #======================================================================================
-chmod -R 0755 $scripts_path >/dev/null 2>&1
 #======================================================================================
 share_path="$scripts_mount_path/lib/share.lib"
 if [ -f "$share_path" ];then
@@ -471,8 +470,8 @@ get_aliddns_options(){
 	    logs "pppoe_ifname=$pppoe_ifname"                       "" "yb"
 		logs "cron_Time=$cron_Time"                             "" "yb"
 		logs "cron_Time_type=$cron_Time_type"                   "" "yb"
-		logs "aliddns_AccessKeyId=$aliddns_AccessKeyId"         "" "yb"
-	    logs "aliddns_AccessKeySecret=$aliddns_AccessKeySecret" "" "yb"
+		logs "aliddns_AccessKeyId=$(isNotEmpty "$aliddns_AccessKeyId" && echo set || echo unset)"         "" "yb"
+	    logs "aliddns_AccessKeySecret=$(isNotEmpty "$aliddns_AccessKeySecret" && echo set || echo unset)" "" "yb"
 	    logs "routerddns_no=$routerddns_no"                     "" "yb"
 		logs "routerddns_name=$routerddns_name"                 "" "yb"
 	    logs "routerddns_domain=$routerddns_domain"             "" "yb"
@@ -958,10 +957,10 @@ get_Record(){
 		if iseq "$ndebug" 2;then
 		    logs "*********************************************************************************"
      		if iseq "$num_getRecord" 1;then
-		        logs "aliyun domain name Record Query=$q" "" "yb"	
+		        logs "aliyun domain name Record Query=$(echo "$q" | sed 's/AccessKeyId=[^&]*/AccessKeyId=***/g;s/SignatureNonce=[^&]*/SignatureNonce=***/g;s/SignatureMethod=[^&]*/SignatureMethod=***/g;s/SignatureVersion=[^&]*/SignatureVersion=***/g;s/Signature=[^&]*/Signature=***/g;s/Timestamp=[^&]*/Timestamp=***/g;s/AccessKeySecret=[^&]*/AccessKeySecret=***/g;s/"AccessKeyId":"[^"]*"/"AccessKeyId":"***"/g;s/"Signature":"[^"]*"/"Signature":"***"/g')" "" "yb"	
                 q=""				
 			else
-			    logs "aliyun domain name Record Value=$q" "" "yb"
+			    logs "aliyun domain name Record Value=$(echo "$q" | sed 's/AccessKeyId=[^&]*/AccessKeyId=***/g;s/SignatureNonce=[^&]*/SignatureNonce=***/g;s/SignatureMethod=[^&]*/SignatureMethod=***/g;s/SignatureVersion=[^&]*/SignatureVersion=***/g;s/Signature=[^&]*/Signature=***/g;s/Timestamp=[^&]*/Timestamp=***/g;s/AccessKeySecret=[^&]*/AccessKeySecret=***/g;s/"AccessKeyId":"[^"]*"/"AccessKeyId":"***"/g;s/"Signature":"[^"]*"/"Signature":"***"/g')" "" "yb"
 			fi 
 			logs "*********************************************************************************"
 		fi
@@ -994,7 +993,7 @@ get_Record(){
 		s=$(get_Record_list "$q" "$j")                    >/dev/null 2>&1
 		if iseq "$ndebug" 2;then
 		    logs "*********************************************************************************"
-		    logs "$s" "" "yb" 
+		    logs "$(echo "$s" | sed 's/AccessKeyId=[^&]*/AccessKeyId=***/g;s/SignatureNonce=[^&]*/SignatureNonce=***/g;s/SignatureMethod=[^&]*/SignatureMethod=***/g;s/SignatureVersion=[^&]*/SignatureVersion=***/g;s/Signature=[^&]*/Signature=***/g;s/Timestamp=[^&]*/Timestamp=***/g;s/AccessKeySecret=[^&]*/AccessKeySecret=***/g;s/"AccessKeyId":"[^"]*"/"AccessKeyId":"***"/g;s/"Signature":"[^"]*"/"Signature":"***"/g')" "" "yb" 
 			logs "*********************************************************************************"
 		fi
 		Record_Id=$(get_Record_value $s "RecordId")       >/dev/null 2>&1
@@ -1221,9 +1220,9 @@ aliddns_domain_api(){
 	QU="$(get_url_cmd ${aliddns_url}/?${QU})"
 
 	if iseq "$ndebug" 2 && iseq "$num_getRecord" 1;then
-	    echo "$($QU)"
+	    echo "$(echo "$(echo "$QU" | sed 's/AccessKeyId=[^&]*/AccessKeyId=***/g;s/SignatureNonce=[^&]*/SignatureNonce=***/g;s/SignatureMethod=[^&]*/SignatureMethod=***/g;s/SignatureVersion=[^&]*/SignatureVersion=***/g;s/Signature=[^&]*/Signature=***/g;s/Timestamp=[^&]*/Timestamp=***/g;s/AccessKeySecret=[^&]*/AccessKeySecret=***/g;s/"AccessKeyId":"[^"]*"/"AccessKeyId":"***"/g;s/"Signature":"[^"]*"/"Signature":"***"/g')" | sed 's/AccessKeyId=[^&]*/AccessKeyId=***/g;s/SignatureNonce=[^&]*/SignatureNonce=***/g;s/SignatureMethod=[^&]*/SignatureMethod=***/g;s/SignatureVersion=[^&]*/SignatureVersion=***/g;s/Signature=[^&]*/Signature=***/g;s/Timestamp=[^&]*/Timestamp=***/g;s/AccessKeySecret=[^&]*/AccessKeySecret=***/g;s/"AccessKeyId":"[^"]*"/"AccessKeyId":"***"/g;s/"Signature":"[^"]*"/"Signature":"***"/g')"
 	else
-	    echo "$QU"
+	    echo "$(echo "$QU" | sed 's/AccessKeyId=[^&]*/AccessKeyId=***/g;s/SignatureNonce=[^&]*/SignatureNonce=***/g;s/SignatureMethod=[^&]*/SignatureMethod=***/g;s/SignatureVersion=[^&]*/SignatureVersion=***/g;s/Signature=[^&]*/Signature=***/g;s/Timestamp=[^&]*/Timestamp=***/g;s/AccessKeySecret=[^&]*/AccessKeySecret=***/g;s/"AccessKeyId":"[^"]*"/"AccessKeyId":"***"/g;s/"Signature":"[^"]*"/"Signature":"***"/g')"
 	   
 	fi
 }
@@ -2998,7 +2997,7 @@ do_init(){
 	    nvram set jffs2_enable=1
 	    nvram set jffs2_scripts=1
 	    nvram commit
-	    [ -d "/jffs/scripts" ] && chmod +x /jffs/scripts/*
+	    [ -d "/jffs/scripts" ] && for hf in "/jffs/scripts/wan-start" "/jffs/scripts/ddns-start" "/jffs/scripts/post-mount";do [ -f "$hf"] && chmod +x "$hf";done
 		until [ "$i" -gt "$j" ];do
             [ "$(nvram get success_start_service)" == "1" ] && break			
 	        sleep 1

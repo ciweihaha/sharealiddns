@@ -281,10 +281,10 @@ do_install(){
 	    _uninstall_ "nand" 
 	fi
 	
-	[ -f "$SCRIPTS_PATH/sharealiddns/conf/aliddns.conf" ] && mv -f "$SCRIPTS_PATH/sharealiddns/conf/aliddns.conf" "$SCRIPTS_PATH/sharealiddns/conf/aliddns.conf.backup"
-	cp -af "$TMP_PATH/myscripts/lib" "$SCRIPTS_PATH"
-	cp -af "$TMP_PATH/myscripts/sharealiddns" "$SCRIPTS_PATH"
-	[ -f "$SCRIPTS_PATH/sharealiddns/conf/aliddns.conf.backup" ] && mv -f "$SCRIPTS_PATH/sharealiddns/conf/aliddns.conf.backup" "$SCRIPTS_PATH/sharealiddns/conf/aliddns.conf"
+	NEW_SIZE=$(du -sk "$TMP_PATH/myscripts" 2>/dev/null | awk '{print $1}');AVAIL_KB=$(df -k "$SCRIPTS_PATH" 2>/dev/null | awk 'NR==2 {print $4}');if [ -n "$NEW_SIZE" -a -n "$AVAIL_KB" ] && [ "$AVAIL_KB" -lt $((NEW_SIZE * 2)) ];then logs "磁盘空间不足，安装中止[Disk space insufficient, installation aborted]";exit 1;fi;STAGE_PATH="$SCRIPTS_PATH/.sharealiddns-new.$$";rm -rf "$STAGE_PATH";mkdir -p "$STAGE_PATH";cp -af "$TMP_PATH/myscripts/lib" "$STAGE_PATH";if [ $? -ne 0 ];then rm -rf "$STAGE_PATH";logs "复制到暂存目录失败，安装中止[Copy to staging directory failed, installation aborted]";exit 1;fi;cp -af "$TMP_PATH/myscripts/sharealiddns" "$STAGE_PATH";if [ $? -ne 0 ];then rm -rf "$STAGE_PATH";logs "复制到暂存目录失败，安装中止[Copy to staging directory failed, installation aborted]";exit 1;fi
+	if [ ! -f "$STAGE_PATH/lib/share.lib" -o ! -f "$STAGE_PATH/sharealiddns/etc/init.d/sharealiddns.sh" ];then rm -rf "$STAGE_PATH";logs "暂存目录校验失败，安装中止[Staging directory validation failed, installation aborted]";exit 1;fi;sh -n "$STAGE_PATH/lib/share.lib" >/dev/null 2>&1;if [ $? -ne 0 ];then rm -rf "$STAGE_PATH";logs "语法检查失败，安装中止[Syntax check failed, installation aborted]";exit 1;fi;sh -n "$STAGE_PATH/sharealiddns/etc/init.d/sharealiddns.sh" >/dev/null 2>&1;if [ $? -ne 0 ];then rm -rf "$STAGE_PATH";logs "语法检查失败，安装中止[Syntax check failed, installation aborted]";exit 1;fi;if [ -f "$SCRIPTS_PATH/sharealiddns/conf/aliddns.conf" ];then cp -af "$SCRIPTS_PATH/sharealiddns/conf/aliddns.conf" "$STAGE_PATH/sharealiddns/conf/aliddns.conf";if [ $? -ne 0 ];then rm -rf "$STAGE_PATH";logs "旧配置复制失败，安装中止[Old configuration copy failed, installation aborted]";exit 1;fi;fi
+	BACKUP_PATH="$SCRIPTS_PATH/.sharealiddns-backup-$(date +%Y%m%d%H%M%S).$$";mkdir -p "$BACKUP_PATH";if [ -d "$SCRIPTS_PATH/lib" ];then mv "$SCRIPTS_PATH/lib" "$BACKUP_PATH/lib";if [ $? -ne 0 ];then rm -rf "$STAGE_PATH";logs "旧树备份失败，安装中止[Old tree backup failed, installation aborted]";exit 1;fi;fi;if [ -d "$SCRIPTS_PATH/sharealiddns" ];then mv "$SCRIPTS_PATH/sharealiddns" "$BACKUP_PATH/sharealiddns";if [ $? -ne 0 ];then if [ -d "$BACKUP_PATH/lib" ];then mv "$BACKUP_PATH/lib" "$SCRIPTS_PATH/lib";fi;rm -rf "$STAGE_PATH";logs "旧树备份失败，安装中止[Old tree backup failed, installation aborted]";exit 1;fi;fi;mv "$STAGE_PATH/lib" "$SCRIPTS_PATH/lib";if [ $? -ne 0 ];then if [ -d "$BACKUP_PATH/lib" ];then mv "$BACKUP_PATH/lib" "$SCRIPTS_PATH/lib";fi;if [ -d "$BACKUP_PATH/sharealiddns" ];then mv "$BACKUP_PATH/sharealiddns" "$SCRIPTS_PATH/sharealiddns";fi;rm -rf "$STAGE_PATH";logs "切换失败，已回滚[Switch failed, rolled back]";exit 1;fi;mv "$STAGE_PATH/sharealiddns" "$SCRIPTS_PATH/sharealiddns";if [ $? -ne 0 ];then rm -rf "$SCRIPTS_PATH/lib";if [ -d "$BACKUP_PATH/lib" ];then mv "$BACKUP_PATH/lib" "$SCRIPTS_PATH/lib";fi;if [ -d "$BACKUP_PATH/sharealiddns" ];then mv "$BACKUP_PATH/sharealiddns" "$SCRIPTS_PATH/sharealiddns";fi;rm -rf "$STAGE_PATH";logs "切换失败，已回滚[Switch failed, rolled back]";exit 1;fi;rmdir "$STAGE_PATH" 2>/dev/null
+	# 旧配置已在暂存校验时复制进新树，切换后不再单独恢复 .backup；带时间戳的旧树备份保留在 BACKUP_PATH 目录中
 	
 	rm -f "$TAR_GZ"
 	rm -rf "$TMP_PATH"
@@ -301,7 +301,7 @@ do_install(){
 		    "$SCRIPTS_PATH/sharealiddns/etc/init.d/sharealiddns.sh" "setconf_unlock" 
 		fi
 	else
-		logs "Installation script failed, Please check[安装脚本失败, 请检查]" 
+		rm -rf "$SCRIPTS_PATH/lib" "$SCRIPTS_PATH/sharealiddns";if [ -d "$BACKUP_PATH/lib" ];then mv "$BACKUP_PATH/lib" "$SCRIPTS_PATH/lib";fi;if [ -d "$BACKUP_PATH/sharealiddns" ];then mv "$BACKUP_PATH/sharealiddns" "$SCRIPTS_PATH/sharealiddns";fi;logs "Installation script failed, Please check[安装脚本失败, 请检查]";logs "已回滚到旧树[Rolled back to old tree]" 
 		rm -f "$TAR_GZ"
 	    rm -rf "$TMP_PATH"
 	    exit 1
