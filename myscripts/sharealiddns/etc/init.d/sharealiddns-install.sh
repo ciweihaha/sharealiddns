@@ -53,20 +53,20 @@ get_os_type(){
 }
 
 do_check(){
-	[ -z "$TAR" ] && logs "You have to install tar[你必须安装tar]" && exit 0
-	[ -z "$MOUNT" ] && logs "You have to install mount[你必须安装mount]" && exit 0
-	[ -z "$BN" ] && logs "You have to install basename[你必须安装basename]" && exit 0
-	[ -z "$NSLOOKUP" ] && logs "You have to install nslookup[你必须安装nslookup]" && exit 0
-	[ -z "$SORT" ] && logs "You have to install sort[你必须安装sort]" && exit 0
-	[ -z "$IP" ] && logs "You have to install ip[你必须安装ip]" && exit 0
-	[ -z "$OPENSSL" ] && logs "You have to install openssl[你必须安装openssl]" && exit 0
-	[ -z "$OPENSSL" ] && logs "You have to install openssl[你必须安装openssl]" && exit 0
-	[ -z "$WGET" ] && logs "You have to install wget[你必须安装wget]" && exit 0
+	[ -z "$TAR" ] && logs "You have to install tar[你必须安装tar]" && exit 1
+	[ -z "$MOUNT" ] && logs "You have to install mount[你必须安装mount]" && exit 1
+	[ -z "$BN" ] && logs "You have to install basename[你必须安装basename]" && exit 1
+	[ -z "$NSLOOKUP" ] && logs "You have to install nslookup[你必须安装nslookup]" && exit 1
+	[ -z "$SORT" ] && logs "You have to install sort[你必须安装sort]" && exit 1
+	[ -z "$IP" ] && logs "You have to install ip[你必须安装ip]" && exit 1
+	[ -z "$OPENSSL" ] && logs "You have to install openssl[你必须安装openssl]" && exit 1
+	[ -z "$OPENSSL" ] && logs "You have to install openssl[你必须安装openssl]" && exit 1
+	[ -z "$WGET" ] && logs "You have to install wget[你必须安装wget]" && exit 1
 	return 0
 }
 
 do_install(){
-    local INSTALL_PATH="$1";local SH="$2"
+    local INSTALL_PATH="$1";local SH="$2";local USER_CANCEL=0
 	local DOWN_COMMIT="fe40cd2d022247cece1bf37230fa0eda6c4d25f6"
 	local DOWN_URL="https://codeload.github.com/zwmscorm/sharealiddns/tar.gz/$DOWN_COMMIT"
 	local DOWN_SHA256="6924f95766537e0f59bd63fe6df2a4d578f146c009ce683b3350c5ec3ebcf319"
@@ -77,7 +77,7 @@ do_install(){
 	local u4="http://ipv4.ident.me http://ipv4.icanhazip.com http://nsupdate.info/myip http://whatismyip.akamai.com http://ipv4.myip.dk/api/info/IPv4Address"
 	local u6="http://ipv6.ident.me http://ipv6.icanhazip.com http://ipv6.ident.me http://ipv6.icanhazip.com http://ipv6.yunohost.org"
 	
-	trap "rm -rf $TMP_PATH;rm -f $TAR_GZ;echo '';logs 'Exit installation.';logs '<<========';exit 0" HUP INT QUIT PIPE ALRM TERM 
+	trap "rm -rf $TMP_PATH;rm -f $TAR_GZ;echo '';logs 'Exit installation.';logs '<<========';exit 1" HUP INT QUIT PIPE ALRM TERM 
 	
 	# No recursive chmod of the current directory or of /jffs/scripts:
 	# only the hook files managed by this software need the executable bit.
@@ -114,7 +114,7 @@ do_install(){
 		logs "Installation to nand example[安装到nand示例]: sh $SH nand"
 		logs "Installation to usb example[安装到usb示例]: sh $SH usb"
 		logs "Uninstallation all example[卸载示例]: sh $SH uninstall"
-		exit 0
+		exit 1
 	fi
 	#uninstall all
     if [ "$INSTALL_PATH" == "uninstall" ];then
@@ -143,14 +143,14 @@ do_install(){
 		    logs "No active partition was found available[找不到可用的活动分区]" 
 			rm -f "$TAR_GZ"
 	        rm -rf "$TMP_PATH"
-		    exit 0
+		    exit 1
 		fi
 	    echo -en "${INFO}${YB_COLOR}Please enter the partition number and press 0 to exit[请输入分区号按0将退出]${N_COLOR}"
 	    echo -en "$YB_COLOR=>[0~$(($i-1))]:${N_COLOR}"
 	    while :;do
             read v
 	        if [ "$v" -ge 0 2>/dev/null ];then
-	            [ "$v" == "0" ] && break
+	            [ "$v" == "0" ] && USER_CANCEL=1 && break
 	            if [ "$v" -gt $(($i-1)) ];then
                     logs "Invalid partition number, reinput[分区号无效, 重输]"
 				    echo -en "${INFO}${YB_COLOR}Please enter the partition number and press 0 to exit[请输入分区号按0将退出]${N_COLOR}"
@@ -180,7 +180,8 @@ do_install(){
 	    logs "Installation path is not determined[安装路径没确定好]"
 	    rm -f "$TAR_GZ"
 	    rm -rf "$TMP_PATH"
-	    exit 0
+	    [ "$USER_CANCEL" == "1" ] && exit 0
+	    exit 1
 	fi
 	
 	#Firmware compatibility is being check
@@ -188,7 +189,7 @@ do_install(){
 	local str1="A";local str2="a"
 	if [ -z "$(echo $str1 | $OPENSSL dgst -sha1 -hmac $str2 -binary | $OPENSSL base64)" ];then
 	    logs "$OPENSSL is unavailable[${OPENSSL}无法使用]"
-		exit 0
+		exit 1
 	fi
    
 	for u in $u4;do
@@ -256,7 +257,7 @@ do_install(){
 		    logs "SHA-256 verification failed, installation aborted[SHA-256校验失败, 安装中止]"
 		    rm -f "$TAR_GZ"
 		    rm -rf "$TMP_PATH"
-		    exit 0
+		    exit 1
 		fi
 		logs "SHA-256 verified[SHA-256校验通过]"
 		"$TAR" -xzf "$TAR_GZ" -C "/tmp/"
@@ -264,10 +265,10 @@ do_install(){
 		    logs "Tar failed, Please reinstall[tar解压失败, 请重新安装]" 
 		    rm -f "$TAR_GZ"
 		    rm -rf "$TMP_PATH"
-		    exit 0
+		    exit 1
 	    fi
 	else
-	    logs "The download failed because of slow network or because HTTPS was rejected by GitHub[下载失败, 因网络慢，或因https被github拒绝]" && exit 0
+	    logs "The download failed because of slow network or because HTTPS was rejected by GitHub[下载失败, 因网络慢，或因https被github拒绝]" && exit 1
 	fi
  
 	#Install
@@ -303,6 +304,7 @@ do_install(){
 		logs "Installation script failed, Please check[安装脚本失败, 请检查]" 
 		rm -f "$TAR_GZ"
 	    rm -rf "$TMP_PATH"
+	    exit 1
 	fi
 	logs "<<========"
 }
