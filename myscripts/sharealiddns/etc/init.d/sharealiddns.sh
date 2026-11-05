@@ -574,7 +574,8 @@ set_aliddns_conf(){
 	v=""
 	while :;do
 	    echo -en "${INFO}${YB_COLOR}阿里云cret-${s8}[必须真实有效并通过阿里云审核]:${N_COLOR}"
-	    read v
+	    read -s v
+	    echo ""
 		v=$(echo "$v" | TRIMALL)
 		if echo "$v" | grep -q '^[#]\+$';then
 		    break
@@ -884,8 +885,8 @@ set_aliddns_conf(){
 	        logs "PPPOE接口-${s3}=${r}${pif}${r}"             "" "yb"
 		    logs "定时更新域名时间-${s4}=${r}${cnt}${r}"      "" "yb"
 		    logs "定时更新域名时间类型-${s5}=${r}${cnty}${r}" "" "yb"
-		    logs "阿里云key-${s7}=${r}${key}${r}"             "" "yb"
-	        logs "阿里云cret-${s8}=${r}${cret}${r}"           "" "yb"
+		    logs "阿里云key-${s7}=$(isNotEmpty "$key" && echo set || echo unset)"             "" "yb"
+	        logs "阿里云cret-${s8}=$(isNotEmpty "$cret" && echo set || echo unset)"           "" "yb"
 	        logs "远程访问路由器列表号-${s9}=${r}${rno}${r}"  "" "yb"
 			logs "远程访问路由器地址=[${rn}.${rd}]"           "" "yb"	
 			n=1
