@@ -157,11 +157,11 @@ option ipv6 '0'
 　　　 耐心等待直至安装完成。
 　　3、拷贝下面的安装脚本指令并粘贴到xshell或FinalShell命令行窗口中，回车：
 -----------------------------------------------------分割线下是安装脚本指令----------------------------------------------------------
-cd /tmp/ && wget --no-check-certificate https://raw.githubusercontent.com/zwmscorm/sharealiddns/master/myscripts/sharealiddns/etc/init.d/sharealiddns-install.sh -O /tmp/sharealiddns-install.sh && chmod 0755 /tmp/sharealiddns-install.sh && sh /tmp/sharealiddns-install.sh
+cd /tmp/ && wget https://raw.githubusercontent.com/ciweihaha/sharealiddns/6973999672c9c00f9312fd42d3630abcb739a1e4/myscripts/sharealiddns/etc/init.d/sharealiddns-install.sh -O /tmp/sharealiddns-install.sh && echo "de64043802ba5d56246b08043419534975b8285edcc8cb6523e164c674970109  /tmp/sharealiddns-install.sh" | sha256sum -c - && chmod 0755 /tmp/sharealiddns-install.sh && sh /tmp/sharealiddns-install.sh
 -----------------------------------------------------分割线上是安装脚本指令----------------------------------------------------------
 　　如果固件有curl, 也可以用curl下载脚本:
 -----------------------------------------------------分割线下是安装脚本指令----------------------------------------------------------
-cd /tmp/ && curl -k https://raw.githubusercontent.com/zwmscorm/sharealiddns/master/myscripts/sharealiddns/etc/init.d/sharealiddns-install.sh -o /tmp/sharealiddns-install.sh && chmod 0755 /tmp/sharealiddns-install.sh && sh /tmp/sharealiddns-install.sh
+cd /tmp/ && curl https://raw.githubusercontent.com/ciweihaha/sharealiddns/6973999672c9c00f9312fd42d3630abcb739a1e4/myscripts/sharealiddns/etc/init.d/sharealiddns-install.sh -o /tmp/sharealiddns-install.sh && echo "de64043802ba5d56246b08043419534975b8285edcc8cb6523e164c674970109  /tmp/sharealiddns-install.sh" | sha256sum -c - && chmod 0755 /tmp/sharealiddns-install.sh && sh /tmp/sharealiddns-install.sh
 -----------------------------------------------------分割线上是安装脚本指令----------------------------------------------------------
 如果wget和curl都无法下载，可以先将sharealiddns-install.sh单独以web方式下载到本地，用winscp上传到路由器的tmp目录，然后将 
 sharealiddns-install.sh权限提到0755, 在xshell或FinalShell命令行窗口中粘贴下面安装脚本指令：

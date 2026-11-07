@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  shell:
+    name: Shell syntax + ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v5
+
+      - name: Syntax check (sh and bash)
+        run: |
+          set -eu
+          find myscripts -type f \( -name '*.sh' -o -name '*.lib' \) | sort > /tmp/shell_scripts.txt
+          cat /tmp/shell_scripts.txt
+          while IFS= read -r f; do
+            echo "checking $f"
+            sh -n "$f"
+            bash -n "$f"
+          done < /tmp/shell_scripts.txt
+
+      - name: Install ShellCheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: ShellCheck (errors only)
+        run: |
+          # NOTE: these router scripts use `[ "$v" -ge 0 2>/dev/null ]`, valid
+          # POSIX sh (the redirect applies to the `[` builtin) that ShellCheck
+          # cannot parse (SC1072/SC1073). `sh -n` above is the authoritative
+          # syntax gate; those two codes are excluded here so that genuine
+          # ShellCheck errors still fail the build.
+          find myscripts -type f \( -name '*.sh' -o -name '*.lib' \) -print0 \
+            | sort -z | xargs -0 shellcheck --severity=error --exclude=SC1072,SC1073
