@@ -37,11 +37,11 @@ option  ipv6  '0'
        　　　  耐心等待直至安装完成。     
        　　3、拷贝下面的安装脚本指令并粘贴到xshell或FinalShell命令行窗口中，回车：   
 ---------------------------------------------------分割线下是安装脚本指令--------------------------------------------------------  
-`cd /tmp/ && wget https://raw.githubusercontent.com/ciweihaha/sharealiddns/6973999672c9c00f9312fd42d3630abcb739a1e4/myscripts/sharealiddns/etc/init.d/sharealiddns-install.sh -O /tmp/sharealiddns-install.sh && echo "de64043802ba5d56246b08043419534975b8285edcc8cb6523e164c674970109  /tmp/sharealiddns-install.sh" | sha256sum -c - && chmod 0755 /tmp/sharealiddns-install.sh && sh /tmp/sharealiddns-install.sh`    
+`cd /tmp/ && wget https://raw.githubusercontent.com/ciweihaha/sharealiddns/e0291c92f73defd9626ed95872ec3306872c4361/myscripts/sharealiddns/etc/init.d/sharealiddns-install.sh -O /tmp/sharealiddns-install.sh && echo "e3628601df4b1b182b7969cdb6bfbcf44ab2357cf8e8040cf21b53f581ecdc41  /tmp/sharealiddns-install.sh" | sha256sum -c - && chmod 0755 /tmp/sharealiddns-install.sh && sh /tmp/sharealiddns-install.sh`    
 ---------------------------------------------------分割线上是安装脚本指令--------------------------------------------------------  
 如果固件有curl, 也可以用curl下载脚本:  
 ---------------------------------------------------分割线下是安装脚本指令--------------------------------------------------------  
-`cd /tmp/ && curl https://raw.githubusercontent.com/ciweihaha/sharealiddns/6973999672c9c00f9312fd42d3630abcb739a1e4/myscripts/sharealiddns/etc/init.d/sharealiddns-install.sh -o /tmp/sharealiddns-install.sh && echo "de64043802ba5d56246b08043419534975b8285edcc8cb6523e164c674970109  /tmp/sharealiddns-install.sh" | sha256sum -c - && chmod 0755 /tmp/sharealiddns-install.sh && sh /tmp/sharealiddns-install.sh`    
+`cd /tmp/ && curl https://raw.githubusercontent.com/ciweihaha/sharealiddns/e0291c92f73defd9626ed95872ec3306872c4361/myscripts/sharealiddns/etc/init.d/sharealiddns-install.sh -o /tmp/sharealiddns-install.sh && echo "e3628601df4b1b182b7969cdb6bfbcf44ab2357cf8e8040cf21b53f581ecdc41  /tmp/sharealiddns-install.sh" | sha256sum -c - && chmod 0755 /tmp/sharealiddns-install.sh && sh /tmp/sharealiddns-install.sh`    
 ---------------------------------------------------分割线上是安装脚本指令--------------------------------------------------------  
 　　如果wget和curl都无法下载，可以先将sharealiddns-install.sh单独以web方式下载到本地，用winscp上传到路由器的tmp目录，然后将
             sharealiddns-install.sh权限提到0755, 在xshell或FinalShell命令行窗口中粘贴下面安装脚本指令：  
@@ -67,7 +67,7 @@ option  ipv6  '0'
  
 ## 下载校验与版本固定（安全说明）：
 　　**为防下载链路被中间人篡改，本项目的安装下载已固定版本并强制校验，任何情况下都不要使用 --no-check-certificate 或 curl -k 关闭证书验证。若路由器证书校验报错，应按上文安装 ca 证书/wget/openssl 相关软件包修复，而不是关闭验证。
-　　1、安装脚本本身：上面的安装指令已固定到本仓库提交 6973999672c9c00f9312fd42d3630abcb739a1e4，并在运行前用 sha256sum 核对安装脚本的 SHA-256（应为 de64043802ba5d56246b08043419534975b8285edcc8cb6523e164c674970109）。固件没有 sha256sum 时，可用 `openssl dgst -sha256 /tmp/sharealiddns-install.sh` 查看实际值，与此处记录值一致才可运行。
+　　1、安装脚本本身：上面的安装指令已固定到本仓库提交 e0291c92f73defd9626ed95872ec3306872c4361，并在运行前用 sha256sum 核对安装脚本的 SHA-256（应为 e3628601df4b1b182b7969cdb6bfbcf44ab2357cf8e8040cf21b53f581ecdc41）。固件没有 sha256sum 时，可用 `openssl dgst -sha256 /tmp/sharealiddns-install.sh` 查看实际值，与此处记录值一致才可运行。
 　　2、脚本包下载：安装脚本运行时下载的脚本包已固定到本仓库 ciweihaha/sharealiddns 的提交 2bc35deb147bc638abda93030a6a7232bc0dc2e8（脚本内 DOWN_COMMIT/DOWN_SHA256），其 tar.gz 的 SHA-256 应为 08331cfe177f68d863bece1d16120e8e34a5a57c4d3ac8e997b66be2f8b59457；安装脚本会在解压前自动校验，不一致立即中止安装。注意：此前固定的是上游 zwmscorm/sharealiddns 的提交 fe40cd2d022247cece1bf37230fa0eda6c4d25f6，其脚本包不含本 fork 的修复（https-only API、密钥脱敏、事务化安装等），新装用户实际拿到的是未修复代码，故改固定到本仓库。
 　　3、校验值的来源与更新方法（维护者）：固定版本或校验值只在本仓库的提交中记录。更新固定版本时：先从可信网络下载新提交的 tar.gz 两次，确认两次 SHA-256 相同后，把新提交号与新 SHA-256 更新到 sharealiddns-install.sh 的 DOWN_COMMIT/DOWN_SHA256 并提交；随后再把本节中的安装脚本提交号与安装脚本 SHA-256（以当前 HEAD 提交为准）更新到 README 并提交。**
 
