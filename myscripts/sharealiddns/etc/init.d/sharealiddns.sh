@@ -2998,7 +2998,7 @@ do_init(){
 	    nvram set jffs2_enable=1
 	    nvram set jffs2_scripts=1
 	    nvram commit
-	    [ -d "/jffs/scripts" ] && for hf in "/jffs/scripts/wan-start" "/jffs/scripts/ddns-start" "/jffs/scripts/post-mount";do [ -f "$hf"] && chmod +x "$hf";done
+	    [ -d "/jffs/scripts" ] && for hf in "/jffs/scripts/wan-start" "/jffs/scripts/ddns-start" "/jffs/scripts/post-mount";do [ -f "$hf" ] && chmod +x "$hf";done
 		until [ "$i" -gt "$j" ];do
             [ "$(nvram get success_start_service)" == "1" ] && break			
 	        sleep 1
