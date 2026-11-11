@@ -2011,7 +2011,7 @@ find_wan_info(){
 				wan_ifname="pppoe-${w}"
 				if iseq "$w" "wan";then
 				    wan_no=""
-				elif iseq "$w" "wan";then
+				elif iseq "$w" "wan6";then
 				    wan_no="6"
 				fi
                 break
