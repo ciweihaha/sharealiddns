@@ -1187,9 +1187,11 @@ aliddns_domain_Nonce(){
 aliddns_response_check(){
     ###########################################################################
 	#IF ERROR aliddns_response_check RETURN https://error-center.aliyun.com...
+	#阿里云错误响应一律带 Code 字段（如 Throttling / InvalidAccessKeyId），
+	#成功响应没有该字段；只认 error-center 会把这类错误误判为成功。
 	###########################################################################
 	isEmpty "$1" && return 1
-    if isEmpty "$(echo $1 | set_lowercase | grep -o 'error-center')";then
+    if isEmpty "$(echo $1 | set_lowercase | grep -o 'error-center')" && isEmpty "$(echo $1 | set_lowercase | grep -Eo '"code"[ ]*:')";then
 	    return 0
 	else
 	    return 1

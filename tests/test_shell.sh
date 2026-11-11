@@ -165,6 +165,10 @@ assert_eq "aliddns_name_real www" "$(aliddns_name_real "www" "example.com")" "ww
 aliddns_response_check "";                                  assert_rc "response_check 空响应" 1 $?
 aliddns_response_check '{"RequestId":"x"}';                  assert_rc "response_check 正常响应" 0 $?
 aliddns_response_check '{"Message":"see https://error-center.aliyun.com/x"}'; assert_rc "response_check 错误中心" 1 $?
+aliddns_response_check '{"Code":"Throttling","Message":"denied","RequestId":"x"}'; assert_rc "response_check 限流错误" 1 $?
+aliddns_response_check '{"Code":"InvalidAccessKeyId.NotFound","Message":"bad key","RequestId":"x"}'; assert_rc "response_check 密钥错误" 1 $?
+aliddns_response_check '{"Code" : "Throttling","Message":"denied","RequestId":"x"}'; assert_rc "response_check 限流错误（冒号前空格）" 1 $?
+aliddns_response_check '{"TotalCount":1,"DomainRecords":{"Record":[{"DomainName":"code.example.com","RR":"www"}]},"RequestId":"x"}'; assert_rc "response_check 域名含 code 不误判" 0 $?
 
 # ================= share.lib：check_url 参数（用假 wget 捕获实参） ================= #
 OLD_PATH="$PATH"
