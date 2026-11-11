@@ -67,9 +67,9 @@ do_check(){
 
 do_install(){
     local INSTALL_PATH="$1";local SH="$2";local USER_CANCEL=0
-	local DOWN_COMMIT="fe40cd2d022247cece1bf37230fa0eda6c4d25f6"
-	local DOWN_URL="https://codeload.github.com/zwmscorm/sharealiddns/tar.gz/$DOWN_COMMIT"
-	local DOWN_SHA256="6924f95766537e0f59bd63fe6df2a4d578f146c009ce683b3350c5ec3ebcf319"
+	local DOWN_COMMIT="2bc35deb147bc638abda93030a6a7232bc0dc2e8"
+	local DOWN_URL="https://codeload.github.com/ciweihaha/sharealiddns/tar.gz/$DOWN_COMMIT"
+	local DOWN_SHA256="08331cfe177f68d863bece1d16120e8e34a5a57c4d3ac8e997b66be2f8b59457"
 	local TMP_PATH="/tmp/sharealiddns-$DOWN_COMMIT"
 	local TAR_GZ="$TMP_PATH.tar.gz"
 	local SCRIPTS_PATH=""
