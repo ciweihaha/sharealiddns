@@ -2558,7 +2558,7 @@ do_geneui64(){
 	    local v3=$(echo $v1 | cut -d '/' -f 2)
 	    local v4="$v2::"
 	    local v5="$v2::1"
-	    if isNotEmpty "$ipv6_eui64" isNotEmpty "$v2" && isNotEmpty "$v3" && isNotEmpty "$v4" isNotEmpty "$v5";then
+	    if isNotEmpty "$ipv6_eui64" && isNotEmpty "$v2" && isNotEmpty "$v3" && isNotEmpty "$v4" && isNotEmpty "$v5";then
 	        nvram set ipv6_prefix_length="$v3"
 	        nvram set ipv6_prefix="$v4"
 		    nvram set ipv6_rtr_addr="$v5"
