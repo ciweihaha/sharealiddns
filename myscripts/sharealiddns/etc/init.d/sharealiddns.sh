@@ -1290,7 +1290,6 @@ aliddns_domain_Status(){
     #use:q=$(aliddns_domain_Status "$Record_Id" "$status" "$aliddns_type") 
     local UR=""
     UR="${UR}Action=SetDomainRecordStatus"
-	UR="${UR}${SP}RR=$(aliddns_name_escape "$1")"
 	UR="${UR}${SP}RecordId=$1"
 	UR="${UR}${SP}Status=$2"
 	UR="${UR}${SP}Type=$3"
