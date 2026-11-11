@@ -119,10 +119,8 @@ assert_eq "math 2*3+1" "$(math '2*3+1')" "7"
 
 # ================= share.lib：URL 编码 ================= #
 assert_eq "urlencode 保留字符" "$(do_urlencode "abc-._~")" "abc-._~"
-# 已知问题（待修复）：urlencode 的 `read -n1` 未设 IFS=，空格会被 read 当空白剥掉，
-# 导致空格编成 %00 而非 %20；真实入参（时间戳、签名、IP）不含空格，故未触发。
-# 此处只记录现状，不阻塞套件；修复后应改为断言 a%20b。
-assert_eq "urlencode 空格（已知问题：现为 %00）" "$(do_urlencode "a b")" "a%00b"
+assert_eq "urlencode 空格" "$(do_urlencode "a b")" "a%20b"
+assert_eq "urlencode 制表符" "$(do_urlencode "$(printf 'a\tb')")" "a%09b"
 assert_eq "urlencode & 与 =" "$(do_urlencode "a&b=c")" "a%26b%3Dc"
 assert_eq "urlencode / 与 :" "$(do_urlencode "a/b:c")" "a%2Fb%3Ac"
 assert_eq "urlencode 空串" "$(do_urlencode "")" ""

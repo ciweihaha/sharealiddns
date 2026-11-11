@@ -291,7 +291,7 @@ del_tmpfile(){
 }
 
 urlencode() {
-    while read -n1 v;do 
+    while IFS= read -r -n1 v;do 
         case $v in
             [a-zA-Z0-9.~_-]) printf "%s" "$v";;
                           *) printf "%%%02X" "'$v";; 
