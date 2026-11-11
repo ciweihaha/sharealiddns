@@ -67,9 +67,9 @@ do_check(){
 
 do_install(){
     local INSTALL_PATH="$1";local SH="$2";local USER_CANCEL=0
-	local DOWN_COMMIT="2bc35deb147bc638abda93030a6a7232bc0dc2e8"
+	local DOWN_COMMIT="7edd363fc9842f638de2b6fbc8e6a5cf2b4e0a98"
 	local DOWN_URL="https://codeload.github.com/ciweihaha/sharealiddns/tar.gz/$DOWN_COMMIT"
-	local DOWN_SHA256="08331cfe177f68d863bece1d16120e8e34a5a57c4d3ac8e997b66be2f8b59457"
+	local DOWN_SHA256="7bd37c5ccaf93471079908617b4515e84a8b1e9bf79d8ccd8ca7b7bc865870f7"
 	local TMP_PATH="/tmp/sharealiddns-$DOWN_COMMIT"
 	local TAR_GZ="$TMP_PATH.tar.gz"
 	local SCRIPTS_PATH=""
