@@ -1102,7 +1102,7 @@ check_url(){
 	else
 	    return 1
 	fi
-	r=$($WGET --no-check-certificate --spider T $t t $n $u 2>&1 | grep -o '200')
+	r=$($WGET --spider -T $t -t $n "$u" 2>&1 | grep -o '200')
 	if isNotEmpty "$r";then
         return 0
 	else
