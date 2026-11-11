@@ -241,13 +241,13 @@ get_url_cmd(){
 	        if [ -n "$WGET" ];then
 	            p=$($WGET $m -q -T $t -O- $u) 2>/dev/null
             elif [ -n "$CURL" ];then
-	            p=$($CURL $m -s --connect-timeout $t $u) 2>/dev/null
+	            p=$($CURL $m -s --connect-timeout $t --max-time $((t * 3)) $u) 2>/dev/null
             fi
 	    fi
 	elif [ "$g" == "wget" ];then
 	    p=$($WGET $m -T $t -O- $u) 2>/dev/null
 	elif [ "$g" == "curl" ];then
-	    p=$($CURL $m --connect-timeout $t $u) 2>/dev/null
+	    p=$($CURL $m --connect-timeout $t --max-time $((t * 3)) $u) 2>/dev/null
 	fi
 	echo "$p"
 }
