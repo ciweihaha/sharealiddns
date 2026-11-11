@@ -986,6 +986,8 @@ get_Record(){
 			    exit 1
 			fi
         fi
+        # 失败重试前稍作等待，避免 API 异常时瞬间连打多次
+        sleep 2
         num_getRecord=$(sadd $num_getRecord 1)		
 	done
 	
