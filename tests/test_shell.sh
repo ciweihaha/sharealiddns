@@ -116,6 +116,10 @@ isNotEmpty "";                   assert_rc "isNotEmpty 空串" 1 $?
 assert_eq "sadd 1+2" "$(sadd 1 2)" "3"
 assert_eq "sdec 5-2" "$(sdec 5 2)" "3"
 assert_eq "math 2*3+1" "$(math '2*3+1')" "7"
+assert_eq "STRLSP 常规截取" "$(STRLSP "hello" 1 3)" "ell"
+assert_eq "STRLSP 非数字起始位被拒" "$(STRLSP "hello" "x" 2)" ""
+assert_eq "STRLSP 非数字长度被拒" "$(STRLSP "hello" 1 "y")" ""
+assert_eq "STRLSP 空串" "$(STRLSP "" 1 2)" ""
 
 # ================= share.lib：URL 编码 ================= #
 assert_eq "urlencode 保留字符" "$(do_urlencode "abc-._~")" "abc-._~"

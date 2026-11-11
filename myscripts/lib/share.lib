@@ -149,7 +149,7 @@ fi
 
 STRLSP(){
     local str="$1";local n1="$2";local n2="$3"
-	if isNotEmpty "$str" check_number "$n1" && check_number "$n2";then
+	if isNotEmpty "$str" && check_number "$n1" && check_number "$n2";then
 		echo ${str:$n1:$n2}
     else
         echo ""
