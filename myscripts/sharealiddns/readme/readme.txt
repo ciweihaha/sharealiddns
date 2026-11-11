@@ -157,11 +157,11 @@ option ipv6 '0'
 　　　 耐心等待直至安装完成。
 　　3、拷贝下面的安装脚本指令并粘贴到xshell或FinalShell命令行窗口中，回车：
 -----------------------------------------------------分割线下是安装脚本指令----------------------------------------------------------
-cd /tmp/ && wget https://raw.githubusercontent.com/ciweihaha/sharealiddns/e0291c92f73defd9626ed95872ec3306872c4361/myscripts/sharealiddns/etc/init.d/sharealiddns-install.sh -O /tmp/sharealiddns-install.sh && echo "e3628601df4b1b182b7969cdb6bfbcf44ab2357cf8e8040cf21b53f581ecdc41  /tmp/sharealiddns-install.sh" | sha256sum -c - && chmod 0755 /tmp/sharealiddns-install.sh && sh /tmp/sharealiddns-install.sh
+cd /tmp/ && wget https://raw.githubusercontent.com/ciweihaha/sharealiddns/182df0f31b1ca233ca328b4cc60e91062e108d55/myscripts/sharealiddns/etc/init.d/sharealiddns-install.sh -O /tmp/sharealiddns-install.sh && echo "d2d8e20ed864fc418e87dfd02ad8e5ef70795f6768a8f7a1c98457f0f6615a56  /tmp/sharealiddns-install.sh" | sha256sum -c - && chmod 0755 /tmp/sharealiddns-install.sh && sh /tmp/sharealiddns-install.sh
 -----------------------------------------------------分割线上是安装脚本指令----------------------------------------------------------
 　　如果固件有curl, 也可以用curl下载脚本:
 -----------------------------------------------------分割线下是安装脚本指令----------------------------------------------------------
-cd /tmp/ && curl https://raw.githubusercontent.com/ciweihaha/sharealiddns/e0291c92f73defd9626ed95872ec3306872c4361/myscripts/sharealiddns/etc/init.d/sharealiddns-install.sh -o /tmp/sharealiddns-install.sh && echo "e3628601df4b1b182b7969cdb6bfbcf44ab2357cf8e8040cf21b53f581ecdc41  /tmp/sharealiddns-install.sh" | sha256sum -c - && chmod 0755 /tmp/sharealiddns-install.sh && sh /tmp/sharealiddns-install.sh
+cd /tmp/ && curl https://raw.githubusercontent.com/ciweihaha/sharealiddns/182df0f31b1ca233ca328b4cc60e91062e108d55/myscripts/sharealiddns/etc/init.d/sharealiddns-install.sh -o /tmp/sharealiddns-install.sh && echo "d2d8e20ed864fc418e87dfd02ad8e5ef70795f6768a8f7a1c98457f0f6615a56  /tmp/sharealiddns-install.sh" | sha256sum -c - && chmod 0755 /tmp/sharealiddns-install.sh && sh /tmp/sharealiddns-install.sh
 -----------------------------------------------------分割线上是安装脚本指令----------------------------------------------------------
 如果wget和curl都无法下载，可以先将sharealiddns-install.sh单独以web方式下载到本地，用winscp上传到路由器的tmp目录，然后将 
 sharealiddns-install.sh权限提到0755, 在xshell或FinalShell命令行窗口中粘贴下面安装脚本指令：
