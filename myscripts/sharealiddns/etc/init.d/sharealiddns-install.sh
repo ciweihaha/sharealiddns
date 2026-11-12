@@ -205,12 +205,12 @@ do_install(){
 	
 	for u in $u4;do
 	    logs "Firmware compatibility is being check curl ipv4...[正在检测固件$CURL ipv4兼容性...]-[$u]"
-	    [ -n "$($CURL -4 -f -s --connect-timeout 5 --retry 3 $u)" ] && isCURLV4=0 && break    
+	    [ -n "$($CURL -4 -f -s --connect-timeout 5 --max-time 30 --retry 3 $u)" ] && isCURLV4=0 && break    
 	done
 	if [ "$isIPV6" -eq 0 ] && [ "$isCURLV4" -eq 0 ];then
 	    for u in $u6;do
 		    logs "Firmware compatibility is being check curl ipv6...[正在检测固件$CURL ipv6兼容性...]-[$u]"
-	        [ -n "$($CURL -6 -f -s --connect-timeout 5 --retry 3 $u)" ] && isCURLV6=0 && break    
+	        [ -n "$($CURL -6 -f -s --connect-timeout 5 --max-time 30 --retry 3 $u)" ] && isCURLV6=0 && break    
 	    done	
 	fi
 		
@@ -234,11 +234,11 @@ do_install(){
 	i=1;r="1"
 	while [ $i -le 10 ];do
 	    if [ "$r" == "1" -a -n "$WGET" ];then
-	        "$WGET" -q -O "$TAR_GZ" "$DOWN_URL"
+	        "$WGET" -q -T 30 -t 1 -O "$TAR_GZ" "$DOWN_URL"
 		    [ $? -eq 0 -a -f "$TAR_GZ" ] && r="0"
 	    fi
 	    if [ "$r" == "1" -a -n "$CURL" ];then	
-	        "$CURL" -f "$DOWN_URL" -o "$TAR_GZ"
+	        "$CURL" -f --connect-timeout 15 --max-time 120 "$DOWN_URL" -o "$TAR_GZ"
 		    [ $? -eq 0 -a -f "$TAR_GZ" ] && r="0"
         fi	 
 	    [ "$r" == "0" ] && break
