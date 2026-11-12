@@ -928,12 +928,16 @@ set_aliddns_conf(){
 get_Record_list() {
     local s1=$1;local s2=$2;local n=1
 	isNotEmpty $s2 && n=$s2                                                        
-    echo "$(echo -e $s1 | TRIMALL | awk -F '[' '{print $2}' | awk -F ']' '{print $1}' | awk -F '},' "{print $"$n"}" | RMSTRING '{' | RMSTRING '}')"
+    echo "$(echo -e "$s1" | TRIMALL | awk -F '[' '{print $2}' | awk -F ']' '{print $1}' | awk -F '},' "{print $"$n"}" | RMSTRING '{' | RMSTRING '}')"
 }
 #======================================================================================
 get_Record_value(){ 
-   local s1=$1;local s2=$2
-   echo "$(echo $s1 | TRIMALL | awk -F $s2 '{print $2}' | awk -F ',' '{print $1}' | RMSTRING '"' | RMSTRING '^:' | TRIMALL)" 
+   local s1=$1;local s2=$2;local v=""
+   v="$(echo "$s1" | TRIMALL | awk -F $s2 '{print $2}' | awk -F ',' '{print $1}' | RMSTRING '"' | RMSTRING '^:' | TRIMALL)"
+   case "$v" in
+       *}) v=${v%?} ;;
+   esac
+   echo "$v"
 }
 #======================================================================================
 get_Record(){
@@ -966,7 +970,7 @@ get_Record(){
 			logs "*********************************************************************************"
 		fi
 		if aliddns_response_check "$q" >/dev/null 2>&1;then
-		    Record_RequestId=$(get_Record_value $q "RequestId")     >/dev/null 2>&1
+		    Record_RequestId=$(get_Record_value "$q" "RequestId")     >/dev/null 2>&1
             Record_TotalCount=$(get_Record_value "$q" "TotalCount") >/dev/null 2>&1                                                                      
 		    if isNotEmpty "$Record_RequestId" && isgt "$Record_TotalCount" 0;then
 		        logs "$num_getRecord/$jk:Geting aliyun Record successfully[获取阿里云记录成功]"   "" "vl" "t"
@@ -999,17 +1003,17 @@ get_Record(){
 		    logs "$(echo "$s" | sed 's/AccessKeyId=[^&]*/AccessKeyId=***/g;s/SignatureNonce=[^&]*/SignatureNonce=***/g;s/SignatureMethod=[^&]*/SignatureMethod=***/g;s/SignatureVersion=[^&]*/SignatureVersion=***/g;s/Signature=[^&]*/Signature=***/g;s/Timestamp=[^&]*/Timestamp=***/g;s/AccessKeySecret=[^&]*/AccessKeySecret=***/g;s/"AccessKeyId":"[^"]*"/"AccessKeyId":"***"/g;s/"Signature":"[^"]*"/"Signature":"***"/g')" "" "yb" 
 			logs "*********************************************************************************"
 		fi
-		Record_Id=$(get_Record_value $s "RecordId")       >/dev/null 2>&1
-		Record_IP=$(get_Record_value $s "Value")          >/dev/null 2>&1
-		Record_type=$(get_Record_value $s "Type")         >/dev/null 2>&1		
-		Record_name=$(get_Record_value $s "RR")           >/dev/null 2>&1
-		Record_domain=$(get_Record_value $s "DomainName") >/dev/null 2>&1
-        Record_Status=$(get_Record_value $s "Status")     >/dev/null 2>&1
-        Record_Locked=$(get_Record_value $s "Locked")     >/dev/null 2>&1
-        Record_ttl=$(get_Record_value $s "TTL")           >/dev/null 2>&1
-	    Record_Line=$(get_Record_value $s "Line")         >/dev/null 2>&1
-		Record_Priority=$(get_Record_value $s "Priority") >/dev/null 2>&1
-		Record_Weight=$(get_Record_value $s "Weight")     >/dev/null 2>&1
+		Record_Id=$(get_Record_value "$s" "RecordId")       >/dev/null 2>&1
+		Record_IP=$(get_Record_value "$s" "Value")          >/dev/null 2>&1
+		Record_type=$(get_Record_value "$s" "Type")         >/dev/null 2>&1		
+		Record_name=$(get_Record_value "$s" "RR")           >/dev/null 2>&1
+		Record_domain=$(get_Record_value "$s" "DomainName") >/dev/null 2>&1
+        Record_Status=$(get_Record_value "$s" "Status")     >/dev/null 2>&1
+        Record_Locked=$(get_Record_value "$s" "Locked")     >/dev/null 2>&1
+        Record_ttl=$(get_Record_value "$s" "TTL")           >/dev/null 2>&1
+	    Record_Line=$(get_Record_value "$s" "Line")         >/dev/null 2>&1
+		Record_Priority=$(get_Record_value "$s" "Priority") >/dev/null 2>&1
+		Record_Weight=$(get_Record_value "$s" "Weight")     >/dev/null 2>&1
 		if isEmpty "$Record_Ids";then
 			Record_Ids="$Record_Id"
         else
@@ -1187,11 +1191,13 @@ aliddns_domain_Nonce(){
 aliddns_response_check(){
     ###########################################################################
 	#IF ERROR aliddns_response_check RETURN https://error-center.aliyun.com...
-	#阿里云错误响应一律带 Code 字段（如 Throttling / InvalidAccessKeyId），
-	#成功响应没有该字段；只认 error-center 会把这类错误误判为成功。
+	#阿里云错误响应一律带 Code 字段 (如 Throttling / InvalidAccessKeyId),
+	#成功响应没有该字段; 只认 error-center 会把这类错误误判为成功。
+	#成功响应一定带 RequestId: 无 Code 也无 RequestId 的响应 (如代理返回的 502 HTML)
+	#同样不是成功, 以前会误判为成功并继续按空记录走添加流程。
 	###########################################################################
 	isEmpty "$1" && return 1
-    if isEmpty "$(echo $1 | set_lowercase | grep -o 'error-center')" && isEmpty "$(echo $1 | set_lowercase | grep -Eo '"code"[ ]*:')";then
+    if isEmpty "$(echo "$1" | set_lowercase | grep -o 'error-center')" && isEmpty "$(echo "$1" | set_lowercase | grep -Eo '"code"[ ]*:')" && isNotEmpty "$(echo "$1" | set_lowercase | grep -Eo '"requestid"[ ]*:')";then
 	    return 0
 	else
 	    return 1
@@ -1377,7 +1383,7 @@ do_aliddns_domain_Record_check(){
 	
 	isEmpty "$q" && return 1
 	s=$(echo -e "$q" | sed 's/{//g' | sed 's/}//g')
-	c=$(get_Record_value $s "IsExist") >/dev/null 2>&1
+	c=$(get_Record_value "$s" "IsExist") >/dev/null 2>&1
 	isdnsExist=$(set_strlowercase "$c")
 	if iseq "$isdnsExist" "true";then
 	    return 0
@@ -1395,8 +1401,8 @@ do_aliddns_domain_Whois_Info(){
 		logs "$q" "" "rb" "e"
 	fi
 	isEmpty "$q" && return 1
-	for i in "Pendingdelete" "redemption period" "Clienthold" "serverhold" "Inactive";do
-	    if isNotEmpty "$(echo $q | grep -Eo $i)";then
+	for i in "pendingdelete" "redemptionperiod" "clienthold" "serverhold" "inactive";do
+	    if isNotEmpty "$(echo "$q" | set_lowercase | grep -Eo "$i")";then
 		    r=1
             break			
 		fi
@@ -1576,13 +1582,13 @@ do_start(){
 	if iseq "$actions" "added";then
  		q=$(aliddns_domain_add "$aliddns_name" "$aliddns_domain" "$wan_ipvx_IP" "$aliddns_type") 
 		if aliddns_response_check "$q" >/dev/null 2>&1;then
-		    id=$(get_Record_value $q "RecordId") >/dev/null 2>&1
+		    id=$(get_Record_value "$q" "RecordId") >/dev/null 2>&1
             isNotEmpty "$id" && do_Record_verification "$id" "$wan_ipvx_IP" && return 0
         fi		
     elif iseq "$actions" "updated";then
         q=$(aliddns_domain_update "$aliddns_name" "$wan_ipvx_IP" "$Record_Id" "$aliddns_type")  
 		if aliddns_response_check "$q" >/dev/null 2>&1;then 
-		    id=$(get_Record_value $q "RecordId") >/dev/null 2>&1
+		    id=$(get_Record_value "$q" "RecordId") >/dev/null 2>&1
 		    isNotEmpty "$id" && do_Record_verification "$id" "$wan_ipvx_IP" && return 0
 		fi
     elif iseq "$actions" "remove";then
@@ -1610,8 +1616,8 @@ do_status(){
 	fi
 	
 	isEmpty "$q" && return 1
-	id=$(get_Record_value $q "RecordId") >/dev/null 2>&1
-	st=$(get_Record_value $q "Status")   >/dev/null 2>&1
+	id=$(get_Record_value "$q" "RecordId") >/dev/null 2>&1
+	st=$(get_Record_value "$q" "Status")   >/dev/null 2>&1
 	st=$(echo $st | set_uppercase)
 	
 	if iseq "$id" "$Record_Id";then
@@ -1636,7 +1642,7 @@ do_remove(){
 	        logs "aliddns_domain_del Error, please check." "" "rb" "e"
 			return 1
 	    fi
-		id=$(get_Record_value $q "RecordId") 	
+		id=$(get_Record_value "$q" "RecordId") 	
 		if iseq "$i" "$id";then					   
 			if do_router_ddns_check;then
 		        [ -x "$aliddns_dcu" ] && "$aliddns_dcu" 0
