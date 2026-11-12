@@ -239,13 +239,13 @@ get_url_cmd(){
 	if [ -z "$g" ];then
 	    if [ -n "$u" ];then
 	        if [ -n "$WGET" ];then
-	            p=$($WGET $m -q -T $t -O- $u) 2>/dev/null
+	            p=$($WGET $m -q -T $t -t 1 -O- $u) 2>/dev/null
             elif [ -n "$CURL" ];then
 	            p=$($CURL $m -s --connect-timeout $t --max-time $((t * 3)) $u) 2>/dev/null
             fi
 	    fi
 	elif [ "$g" == "wget" ];then
-	    p=$($WGET $m -T $t -O- $u) 2>/dev/null
+	    p=$($WGET $m -T $t -t 1 -O- $u) 2>/dev/null
 	elif [ "$g" == "curl" ];then
 	    p=$($CURL $m --connect-timeout $t --max-time $((t * 3)) $u) 2>/dev/null
 	fi
@@ -253,10 +253,10 @@ get_url_cmd(){
 }
 #======================================================================================
 get_ip_wget(){
-	local u="$1";local t="$2";local m="$3";local wp=""
+	local u="$1";local t="$2";local m="$3";local wp="";local p=""
 	isEmpty "$t" && t=30
 	if [ -n "$WGET" -a -n "$u" ];then
-	    p=$($WGET -q -T $t -O- $u) 2>/dev/null
+	    p=$($WGET -q -T $t -t 1 -O- $u) 2>/dev/null
 		if iseq $? 0;then
 			if iseq "$m" "ipv4";then
 				public_ipv4_check "$p" && wp="$p" 
@@ -271,10 +271,10 @@ get_ip_wget(){
 }
 #======================================================================================
 get_ip_curl(){
-	local u="$1";local t="$2";local m="$3";local wp=""
+	local u="$1";local t="$2";local m="$3";local wp="";local p=""
 	isEmpty "$t" && t=30
 	if [ -n "$CURL" -a -n "$u" ];then
-	    p=$($CURL -s --connect-timeout $t $u) 2>/dev/null
+	    p=$($CURL -s --connect-timeout $t --max-time $((t * 3)) $u) 2>/dev/null
 		if iseq $? 0;then
 			if iseq "$m" "ipv4";then
 				public_ipv4_check "$p" && wp="$p" 
@@ -290,35 +290,20 @@ get_ip_curl(){
 #======================================================================================
 isgetexternalIPV46(){
     local m="$1";local r="";local u4="https://ipv4.ident.me";local u6="https://ipv6.ident.me"
-	local f4="/tmp/isgetexternalIPV4.success";local f6="/tmp/isgetexternalIPV6.success"
+	# 不再用 /tmp/*.success 缓存: 旧缓存永不过期, 首次失败/成功都会被永久记住,
+	# 且缓存文件损坏时 return "" 会报 numeric argument 错误; 改为每次现探测
+	[ -z "$WGET" ] && return 1
     if iseq "$m" "ipv4";then
-        if [ -f "$f4" ];then
-            r=$(cat "$f4" | grep -w 'success' | RMSTRING 'success=')
-			return "$r"
-		else 
-		    r=$($WGET -T 15 -O- $u4) 2>/dev/null
-            if isNotEmpty "$r" ;then
-	            echo "success=0" > "$f4"
-                return 0
-            else
-	            echo "success=1" > "$f4"
-                return 1
-            fi
-		fi
+	    r=$($WGET -q -T 15 -t 1 -O- $u4) 2>/dev/null
 	elif iseq "$m" "ipv6";then
-        if [ -f "$f6" ];then
-		    r=$(cat "$f6" | grep -w 'success' | RMSTRING 'success=')
-			return "$r"
-		else
-		    r=$($WGET -T 15 -O- $u6) 2>/dev/null
-            if isNotEmpty "$r" ;then
-	            echo "success=0" > "$f6"
-                return 0
-            else
-	            echo "success=1" > "$f6"
-                return 1
-            fi
-		fi
+	    r=$($WGET -q -T 15 -t 1 -O- $u6) 2>/dev/null
+	else
+	    return 1
+	fi
+	if isNotEmpty "$r";then
+	    return 0
+	else
+	    return 1
 	fi
 }
 #======================================================================================
