@@ -1,0 +1,9 @@
+# 让 Dependabot 每周检查 GitHub Actions 的新版本并开 PR，
+# 避免 actions/checkout 等再次落后多个大版本。
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
