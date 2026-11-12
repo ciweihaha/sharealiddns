@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Syntax check (sh and bash)
         run: |
@@ -25,8 +25,15 @@ jobs:
             bash -n "$f"
           done < /tmp/shell_scripts.txt
 
-      - name: Install ShellCheck
-        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      # apt 的 ShellCheck 停在 0.10.0，改用上游官方预编译包 0.11.0（2025-08-03，
+      # 迄今最新稳定版；该 release 未附校验文件，故用版本固定 URL + --version 断言）
+      - name: Install ShellCheck 0.11.0
+        run: |
+          set -eu
+          curl -sSL --max-time 120 -o /tmp/shellcheck.tar.xz https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz
+          tar -xf /tmp/shellcheck.tar.xz -C /tmp
+          sudo install -m 0755 /tmp/shellcheck-v0.11.0/shellcheck /usr/local/bin/shellcheck
+          shellcheck --version
 
       - name: ShellCheck (errors only)
         run: |
