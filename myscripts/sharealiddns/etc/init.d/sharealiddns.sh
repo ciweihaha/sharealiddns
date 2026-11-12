@@ -919,9 +919,8 @@ get_Record_list() {
 get_Record_value(){ 
    local s1=$1;local s2=$2;local v=""
    v="$(echo "$s1" | TRIMALL | awk -F $s2 '{print $2}' | awk -F ',' '{print $1}' | RMSTRING '"' | RMSTRING '^:' | TRIMALL)"
-   case "$v" in
-       *}) v=${v%?} ;;
-   esac
+   # ${v%\}} 只剥一个尾部 } (不用 case *}) 写法, 后者会被 ShellCheck 报 SC1083)
+   v="${v%\}}"
    echo "$v"
 }
 #======================================================================================
