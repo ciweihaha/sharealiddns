@@ -1722,7 +1722,7 @@ goto_ping_wake(){
 		if isne "$m" "none";then
 		    p4=$(echo "$($IP2 -4 neigh show dev $ETH)" | set_lowercase | grep -w $m | grep -v '^169'  | awk '{print $1}' | tail -n1 | awk '{print $NF}')
 		    p6=$(echo "$($IP2 -6 neigh show dev $ETH)" | set_lowercase | grep -w $m | grep -v '^fe80' | awk '{print $1}' | tail -n1 | awk '{print $NF}')
-	        at=$(echo "$($IP2 -6 neigh show dev $ETH)" | set_lowercase | grep -w $m | grep -v '^fe80' | awk '{print $4}' | tail -n1 | awk '{print $NF}')
+	        at=$(echo "$($IP2 -6 neigh show dev $ETH)" | set_lowercase | grep -w $m | grep -v '^fe80' | awk '{print $5}' | tail -n1 | awk '{print $NF}')
 		    isEmpty "$p4" && isEmpty "$p6" && break
 		    valid_ipv4 "$p4" && ! valid_ipv6 "$p6" && r=1 && break
 		    valid_ipv4 "$p4" && valid_ipv6 "$p6" && isNotEmpty "$at" && r=2 && break
@@ -2059,7 +2059,7 @@ get_lan_ipv46(){
 	until [ "$n" -gt 3 ];do 
 	    p4=$(echo "$($IP2 -4 neigh show dev $e)" | set_lowercase | grep -w $m | grep -v '^169'  | awk '{print $1}' | tail -n1 | awk '{print $NF}')
 		p6=$(echo "$($IP2 -6 neigh show dev $e)" | set_lowercase | grep -w $m | grep -v '^fe80' | awk '{print $1}' | tail -n1 | awk '{print $NF}')
-		at=$(echo "$($IP2 -6 neigh show dev $e)" | set_lowercase | grep -w $m | grep -v '^fe80' | awk '{print $4}' | tail -n1 | awk '{print $NF}')
+		at=$(echo "$($IP2 -6 neigh show dev $e)" | set_lowercase | grep -w $m | grep -v '^fe80' | awk '{print $5}' | tail -n1 | awk '{print $NF}')
 		valid_ipv4 "$p4" && lan_ipv4_IP="$p4" 
 		valid_ipv6 "$p6" && lan_ipv6_IP="$p6"
 	    isNotEmpty "$lan_ipv4_IP" && isNotEmpty "$lan_ipv6_IP" && lan_ipvx_IP="$lan_ipv6_IP" && break
@@ -2574,12 +2574,16 @@ do_geneui64(){
 do_remove_client(){
    local v;local p;local m
    while :;do
-        v=`ip -6 neigh show dev $ETH | grep -v '^fe80'`	
+        v=`ip -6 neigh show dev $ETH | grep -v '^fe80' | awk 'NR==1{print}'`
 	    p=$(echo $v | cut -d ' ' -f 1)
-	    m=$(echo $v | cut -d ' ' -f 3)
+	    m=$(echo $v | cut -d ' ' -f 5)
 	    isEmpty "$p" && isEmpty "$m" && break
 	    logs "remove permanent for client[$v]" "" "gb"
-	    ip -6 neigh del "$p" lladdr "$m" dev $ETH
+	    if isNotEmpty "$m";then
+	        ip -6 neigh del "$p" lladdr "$m" dev $ETH
+	    else
+	        ip -6 neigh del "$p" dev $ETH
+	    fi
     done
 	return 0
 }
@@ -2600,8 +2604,8 @@ do_client(){
         ii=1
 		t=`date '+%Y-%m-%d-%H:%M:%S'`
         pl=$(ip $jj neigh show dev $ETH | grep -v '^fe80' | grep -v '::1' | awk '{print $1}')
-		ml=$(ip $jj neigh show dev $ETH | grep -v '^fe80' | grep -v '::1' | awk '{print $3}')
-		sl=$(ip $jj neigh show dev $ETH | grep -v '^fe80' | grep -v '::1' | awk '{print $4}')
+		ml=$(ip $jj neigh show dev $ETH | grep -v '^fe80' | grep -v '::1' | awk '{print $5}')
+		sl=$(ip $jj neigh show dev $ETH | grep -v '^fe80' | grep -v '::1' | awk '{print $6}')
 		nn=$(echo "$pl" | awk 'END{print NR}')
 		[ -z "$pl" ] && logs "No client was found[没有发现客户端]" "" "yb" && rm -f "$FL" && exit 1
 		until [ "$ii" -gt "$nn" ];do 
