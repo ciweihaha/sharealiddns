@@ -463,7 +463,7 @@ get_aliddns_options(){
 		logs "*********************************************************************"
 	fi
 	
-	if isNotEmpty "$routerddns_domain" && isNotEmpty "routerddns_name";then
+	if isNotEmpty "$routerddns_domain" && isNotEmpty "$routerddns_name";then
         ct=1
 	else
 	    logs "routerddns_domain or routerddns_name has a formatted error, Please check." "" "rb" "e"
@@ -1189,7 +1189,7 @@ aliddns_response_check(){
 }
 #======================================================================================
 aliddns_domain_api(){
-    local UR="";local US="";QU="";local HM="GET";
+    local UR="";local US="";local QU="";local HM="GET";
 	local KS="${aliddns_AccessKeySecret}"
 	local KI="${aliddns_AccessKeyId}"
 	local SE=$(aliddns_encode '/')
@@ -1438,10 +1438,10 @@ do_Record_Only_check(){
 #======================================================================================
 do_checkwanip(){
     if iseq "$aliddns_type" "AAAA" && iseq "$isipv6_domain" 0;then
-		set_success 1 "$actions" "skiped"	
+		set_success 1 "$actions" "skipped"	
 	    return 1
 	elif iseq "$aliddns_type" "A" && iseq "$isipv4_domain" 0;then
-		set_success 1 "$actions" "skiped"	
+		set_success 1 "$actions" "skipped"	
 	    return 1
 	fi
     if iseq "$aliddns_type" "A" || iseq "$aliddns_type" "AAAA";then
@@ -1460,10 +1460,10 @@ do_check(){
     isdnsExist="false"
 
 	if iseq "$aliddns_type" "AAAA" && iseq "$isipv6_domain" 0;then
-		set_success 1 "$actions" "skiped"	
+		set_success 1 "$actions" "skipped"	
 	    return 1
 	elif iseq "$aliddns_type" "A" && iseq "$isipv4_domain" 0;then
-		set_success 1 "$actions" "skiped"	
+		set_success 1 "$actions" "skipped"	
 	    return 1
 	fi
 	
@@ -1556,10 +1556,10 @@ do_check(){
 do_start(){
     local q="";local id=""
 	if iseq "$aliddns_type" "AAAA" && iseq "$isipv6_domain" 0;then
-		set_success 1 "$actions" "skiped"	
+		set_success 1 "$actions" "skipped"	
 	    return 1
 	elif iseq "$aliddns_type" "A" && iseq "$isipv4_domain" 0;then
-		set_success 1 "$actions" "skiped"	
+		set_success 1 "$actions" "skipped"	
 	    return 1
 	fi
     logs "$Count:[$aliddns_type]-[$aliddns_name.$aliddns_domain] $actions operations will be performed..." "" "y"
@@ -2127,6 +2127,9 @@ get_wan_ipv46(){
 		fi
 		r=0
 	fi
+	# 未取到任何 IP 时必须返回失败：旧实现 r 恒为 0，调用方 do_wan_ipaddr
+	# 的失败分支成死代码，还会拿空 IP 去调更新接口
+	isEmpty "$wan_ipvx_IP" && r=1
 	if iseq "$aliddns_type" "AAAA";then
 	    wan_ipv6_IP="$wan_ipvx_IP"
 	elif iseq "$aliddns_type" "A";then
@@ -2365,7 +2368,7 @@ do_aliddns_log(){
 				fi
 			fi
 	        ;;
-		"update")
+		"update"|"updated")
 		    if iseq "$aliddns_type" "A";then
 			    log="[$t]-$m-$xan_ipvx_IP[$wan_ipvx_IP]-[$v1-$v2]"
 			elif iseq "$aliddns_type" "AAAA";then
@@ -2841,8 +2844,11 @@ get_externalIP(){
 		    isge "$i" "$j" && break 
 		    i=$(sadd $i 1)
         done 
-        if isEmpty "$wp";then
-	        r=1;i=1;j=3
+        # 探测源返回非空脏数据（如限流 HTML）时 wp 非空，旧的 isEmpty 判断会
+        # 跳过本地接口回退直接退出；改按 r（是否已成功）判定，并清空脏 wp，
+        # 否则回退循环的 isNotEmpty "$wp" 会把脏数据当有效 IP 接受
+        if isne "$r" 0;then
+	        wp="";r=1;i=1;j=3
 	        while :;do
 	            if iseq "$wan_ifname" "";then
 	                pl=$($IP2 addr show                 | sed -n '/inet/{s!.*inet* !!;s!/.*!!p}' | sed 's/peer.*//' | grep -v 'inet6')
@@ -2908,8 +2914,9 @@ get_externalIP(){
 	    isge "$i" "$j" && break 
 	    i=$(sadd $i 1)
     done
-	if isEmpty "$wp";then
-	    r=1;i=1;j=3
+	# 同上：按 r 判定是否需要本地接口回退，并清空脏 wp
+	if isne "$r" 0;then
+	    wp="";r=1;i=1;j=3
 	    while :;do
 	        if iseq "$wan_ifname" "";then
 	            pl=$($IP2 addr show                 | sed -n '/inet/{s!.*inet6* !!;s!/.*!!p}' | sed 's/peer.*//' | grep -v '^fe80' | grep -v 'inet')
@@ -3013,7 +3020,7 @@ do_init(){
 			restart_wan >/dev/null 2>&1
 		fi
 	    cron_File=$(ls /etc/storage/cron/crontabs) 
-	    if [ -n "/etc/storage/cron/crontabs/$cron_File" ];then
+	    if [ -n "$cron_File" ];then
 	        cron_File="/etc/storage/cron/crontabs/$cron_File"
 	    fi
 	    ETH="br0"
@@ -3038,7 +3045,9 @@ do_init(){
             /etc/init.d/network restart 
 	    fi
 	    cron_File=$(ls /etc/crontabs) 
-	    if [ -n "/etc/crontabs/$cron_File" ];then
+	    # 旧判断 [ -n "/etc/crontabs/$cron_File" ] 恒真（字面量非空），
+	    # crontabs 为空时走不到 else 的 /etc/crontabs/root 回退，cron 静默装不上
+	    if [ -n "$cron_File" ];then
 	        cron_File="/etc/crontabs/$cron_File"
 		else
 		    cron_File="/etc/crontabs/root"
