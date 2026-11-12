@@ -266,7 +266,6 @@ chmod +x "$FAKEBIN2/wget" "$FAKEBIN2/curl" "$FAKEBIN2/ip" "$FAKEBIN2/sleep" "$FA
 export FAKE_TOOL_ARGS="$FAKEBIN2/args.log"
 OLD_PATH2="$PATH"
 OLD_WGET="$WGET"; OLD_CURL="$CURL"
-REAL_SLEEP="$(command -v sleep)" # 备用：本节用 timeout，未直接用
 PATH="$FAKEBIN2:$PATH"
 WGET="$FAKEBIN2/wget"; CURL="$FAKEBIN2/curl"
 
