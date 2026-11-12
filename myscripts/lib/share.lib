@@ -539,14 +539,14 @@ do_cron(){
 	    if iseq "$hour" "*";then
 	        ct=1	
 	    elif check_number "$hour";then
-	        if isge "$hour" 0 && isle "$hour" 24;then
+	        if isge "$hour" 0 && isle "$hour" 23;then
 	            ct=1
 		    else
-		        logs "hour has 0~24 or *, please check." "" "rf" 
+		        logs "hour has 0~23 or *, please check." "" "rf" 
 		        return 1
 		    fi
 	    else 
-	        logs "hour has 0~24 or *, please check." "" "rf" 
+	        logs "hour has 0~23 or *, please check." "" "rf" 
 		    return 1
 	    fi
 	    if iseq "$min" "*";then
@@ -866,7 +866,9 @@ valid_ip(){
 }
 
 valid_mac(){
-    echo "$1" | egrep '[0-9a-fA-F:]' | grep -o '[0-9a-fA-F]\{2\}\:[0-9a-fA-F]\{2\}\:[0-9a-fA-F]\{2\}\:[0-9a-fA-F]\{2\}\:[0-9a-fA-F]\{2\}\:[0-9a-fA-F]\{2\}' > /dev/null
+    # 旧实现用 grep -o 找子串，不锚定首尾，"xx:aa:bb:cc:dd:ee:ff" 或
+    # 7 段 "aa:bb:cc:dd:ee:ff:00" 也会通过；改全串锚定匹配
+    echo "$1" | grep '^[0-9a-fA-F]\{2\}:[0-9a-fA-F]\{2\}:[0-9a-fA-F]\{2\}:[0-9a-fA-F]\{2\}:[0-9a-fA-F]\{2\}:[0-9a-fA-F]\{2\}$' > /dev/null
     if iseq $? 0;then   
 	    return 0
 	else
