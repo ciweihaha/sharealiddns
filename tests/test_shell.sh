@@ -40,7 +40,7 @@ type valid_ipv4 >/dev/null 2>&1 || { echo "FAIL - share.lib 未能载入"; exit 
 # 注意：必须写临时文件再 source，直接 eval 会提前展开函数体内的 "$n" 等变量
 SP="&"
 _EXTRACTED="$(mktemp)"
-for fn in get_Record_list get_Record_value aliddns_name_escape aliddns_name_real aliddns_response_check get_url_cmd get_ip_wget get_ip_curl isgetexternalIPV46 do_client do_remove_client get_lan_ipv46 do_aliddns_domain_Whois_Info; do
+for fn in get_Record_list get_Record_value aliddns_name_escape aliddns_name_real aliddns_response_check get_url_cmd get_ip_wget get_ip_curl isgetexternalIPV46 do_client do_remove_client get_lan_ipv46 do_aliddns_domain_Whois_Info get_wan_ipv46 do_run_check get_wan_startPID get_dhcp6cPID get_externalIP do_aliddns_log; do
     sed -n "/^$fn()[[:space:]]*{/,/^}/p" "$MAIN" >> "$_EXTRACTED"
 done
 # shellcheck disable=SC1090
@@ -89,6 +89,9 @@ valid_mac AA:BB:CC:DD:EE:FF;      assert_rc "valid_mac 大写" 0 $?
 valid_mac aa:bb:cc:dd:ee;         assert_rc "valid_mac 缺一段" 1 $?
 valid_mac gg:bb:cc:dd:ee:ff;      assert_rc "valid_mac 非法字符" 1 $?
 valid_mac "";                     assert_rc "valid_mac 空串" 1 $?
+valid_mac "xx:aa:bb:cc:dd:ee:ff"; assert_rc "valid_mac 前缀多余字符" 1 $?
+valid_mac "aa:bb:cc:dd:ee:ff:00"; assert_rc "valid_mac 多一段" 1 $?
+valid_mac "aa:bb:cc:dd:ee:ff ";   assert_rc "valid_mac 尾空格" 1 $?
 
 # ================= share.lib：数值 / 字符串 ================= #
 check_number 0;                  assert_rc "check_number 0" 0 $?
@@ -338,6 +341,67 @@ export -f do_remove_client logs isEmpty isNotEmpty
 RM_OUT="$(mktemp)"
 timeout 5 bash -c 'do_remove_client' > "$RM_OUT" 2>&1
 assert_rc "do_remove_client 删完退出" 0 $?
+
+# ================= share.lib：do_cron 小时取值范围 ================= #
+# cron 小时字段合法范围是 0~23；旧实现放行 24，生成的定时任务永不触发。
+# 本机无 cru 且 cron 文件不存在时，校验通过即返回 0（不实际写 cron）。
+do_cron "t1" "a" "/tmp/nonexistent-cron-test" "month=* week=* day=* hour=24 min=0" "none" "/bin/true" "update" >/dev/null 2>&1; assert_rc "do_cron hour=24 应拒绝" 1 $?
+do_cron "t1" "a" "/tmp/nonexistent-cron-test" "month=* week=* day=* hour=23 min=0" "none" "/bin/true" "update" >/dev/null 2>&1; assert_rc "do_cron hour=23 应放行" 0 $?
+do_cron "t1" "a" "/tmp/nonexistent-cron-test" "month=* week=* day=* hour=0 min=0" "none" "/bin/true" "update" >/dev/null 2>&1; assert_rc "do_cron hour=0 应放行" 0 $?
+
+# ================= 主脚本：do_aliddns_log 的 updated 动作 ================= #
+# do_Record_verification 以 "$actions"（added/updated）记日志；旧实现 case
+# 里只有 "update"，updated 动作一律写空行，更新成功/失败无从查证。
+LOG_TMP="$(mktemp -d)"
+OLD_ISLOG="$islog"; OLD_ALIDDNS_LOG="$aliddns_log"; OLD_ALIDDNS_MSG="$aliddns_msg"
+islog=1; aliddns_log="$LOG_TMP/log.txt"; aliddns_msg="$LOG_TMP/msg.txt"
+Count=1; aliddns_type="A"; aliddns_name="www"; aliddns_domain="example.com"
+wan_ipvx_IP="203.0.113.7"; xan_ipvx_IP="wan_ipv4_IP"
+do_aliddns_log "updated" "success"
+grep -q "updated-success" "$LOG_TMP/log.txt" && ok "do_aliddns_log updated 写日志" || not_ok "do_aliddns_log updated 写日志" "log=[$(cat "$LOG_TMP/log.txt")]"
+do_aliddns_log "added" "success"
+grep -q "added-success" "$LOG_TMP/log.txt" && ok "do_aliddns_log added 写日志" || not_ok "do_aliddns_log added 写日志" "log=[$(cat "$LOG_TMP/log.txt")]"
+islog="$OLD_ISLOG"; aliddns_log="$OLD_ALIDDNS_LOG"; aliddns_msg="$OLD_ALIDDNS_MSG"
+rm -rf "$LOG_TMP"
+
+# ================= 主脚本：get_wan_ipv46 无 IP 时必须失败 ================= #
+# 旧实现 r 恒为 0：内外网 IP 都取不到时仍返回成功，do_wan_ipaddr 的失败
+# 分支成死代码，还会拿空 IP 去调更新接口。
+OLD_IP2_WAN="$IP2"
+cat > "$FAKEBIN2/ip-empty" <<'EOF'
+#!/bin/sh
+exit 0
+EOF
+chmod +x "$FAKEBIN2/ip-empty"
+IP2="$FAKEBIN2/ip-empty"
+isRUN=0; wanstartPID=999; wan_ifname=""; proto=""
+aliddns_type="A"; externalIP4=""; externalIP6=""
+get_wan_ipv46 >/dev/null 2>&1; assert_rc "get_wan_ipv46 无 IP 返回 1" 1 $?
+[ -z "$wan_ipvx_IP" ] && ok "get_wan_ipv46 无 IP 时 wan_ipvx_IP 为空" || not_ok "get_wan_ipv46 无 IP 时 wan_ipvx_IP 为空" "got=[$wan_ipvx_IP]"
+externalIP4="203.0.113.7"
+get_wan_ipv46 >/dev/null 2>&1; assert_rc "get_wan_ipv46 有外网 IP 返回 0" 0 $?
+assert_eq "get_wan_ipv46 外网 IP" "$wan_ipvx_IP" "203.0.113.7"
+IP2="$OLD_IP2_WAN"
+
+# ================= 主脚本：get_externalIP 探测脏数据时仍回退本地接口 ================= #
+# 探测源返回非空脏数据（如限流 HTML）时，旧实现因 wp 非空跳过本地接口
+# 回退直接退出；现按 r 判定回退，并清空脏 wp（否则回退循环会把脏数据
+# 当有效 IP 接受）。注意：此节重定义 get_url_cmd，须放在其余 get_url_cmd
+# 用例之后。
+cat > "$FAKEBIN2/ip-pub" <<'EOF'
+#!/bin/sh
+echo "inet 203.0.113.7/24 brd 203.0.113.255 scope global eth0"
+EOF
+chmod +x "$FAKEBIN2/ip-pub"
+OLD_IP2_EXT="$IP2"; OLD_U4="$u4"
+IP2="$FAKEBIN2/ip-pub"; u4="https://example.invalid"
+isipv4_domain=1; isipv6_domain=0; wan_ifname=""
+get_url_cmd() { printf 'Rate limit exceeded'; }
+EXT_OUT="$(mktemp)"
+get_externalIP > "$EXT_OUT" 2>&1; assert_rc "get_externalIP 脏响应仍回退成功" 0 $?
+assert_eq "get_externalIP 回退得到本地公网 IP" "$externalIP4" "203.0.113.7"
+IP2="$OLD_IP2_EXT"; u4="$OLD_U4"
+rm -f "$EXT_OUT"
 
 # ---- 恢复环境 ---- #
 PATH="$OLD_PATH2"

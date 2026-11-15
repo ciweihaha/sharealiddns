@@ -5,8 +5,8 @@ SORT=`which sort`;IP=`which ip`;WGET=`which wget`;CURL=`which curl`;OS_TYPE="";P
 logs(){
     Y_COLOR="\033[0;33;40m"
     YB_COLOR="\033[1;33;40m"
-	INFO="${Y_COLOR}INFO:${N_COLOR}"
 	N_COLOR="\033[0m"
+	INFO="${Y_COLOR}INFO:${N_COLOR}"
 	echo -e "${INFO}${YB_COLOR}${1}${N_COLOR}"
 	logger  "$1"
 	return 0
@@ -60,7 +60,6 @@ do_check(){
 	[ -z "$SORT" ] && logs "You have to install sort[你必须安装sort]" && exit 1
 	[ -z "$IP" ] && logs "You have to install ip[你必须安装ip]" && exit 1
 	[ -z "$OPENSSL" ] && logs "You have to install openssl[你必须安装openssl]" && exit 1
-	[ -z "$OPENSSL" ] && logs "You have to install openssl[你必须安装openssl]" && exit 1
 	[ -z "$WGET" ] && logs "You have to install wget[你必须安装wget]" && exit 1
 	return 0
 }
@@ -74,8 +73,10 @@ do_install(){
 	local TAR_GZ="$TMP_PATH.tar.gz"
 	local SCRIPTS_PATH=""
 	local i=1;local m="";local s="";local l="";local n=0;local p4="";local p6="";local isWGETV4=1;local isCURLV4=1;local isWGETV6=1;local isCURLV6=1
-	local u4="http://ipv4.ident.me http://ipv4.icanhazip.com http://nsupdate.info/myip http://whatismyip.akamai.com http://ipv4.myip.dk/api/info/IPv4Address"
-	local u6="http://ipv6.ident.me http://ipv6.icanhazip.com http://ipv6.ident.me http://ipv6.icanhazip.com http://ipv6.yunohost.org"
+	# 探测源一律 HTTPS：与 aliddns.conf 一致（2026-10-19 已移除 HTTP 明文源），
+	# 明文探测响应可被中间人篡改，让不可用的 wget/curl 误判为可用
+	local u4="https://ipv4.ident.me https://ipv4.icanhazip.com https://nsupdate.info/myip https://whatismyip.akamai.com https://ipv4.myip.dk/api/info/IPv4Address"
+	local u6="https://ipv6.ident.me https://ipv6.icanhazip.com https://ipv6.ident.me https://ipv6.icanhazip.com https://ipv6.yunohost.org"
 	
 	trap "rm -rf $TMP_PATH;rm -f $TAR_GZ;echo '';logs 'Exit installation.';logs '<<========';exit 1" HUP INT QUIT PIPE ALRM TERM 
 	
